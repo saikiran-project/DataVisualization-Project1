@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang = "en">
+	<head>
+		<meta charset = "UTF-8">
+		<link rel = "stylesheet" href = "style.css">
+		<script src = "https://d3js.org/d3.v3.min.js"></script>
+		<title>Cholera Visualization</title>
+	</head>
+	<body>
+		<h1>Cholera Outbreak Visualization | <a href = 'about.html'> About </a> | <a href = 'documentation.html'> Documentation </a> </h1>
+		<br>
+		<br>
+		<script>
+			function create_figures(scaleXY) {
+				d3.select('svg').selectAll('*').remove();
+				d3.select('body').append('svg').attr('width', 2500*scaleXY).attr('height', 2500*scaleXY).attr('id', 'svg1')
+				d3.select('#svg1').append('svg').attr('width', 1000*scaleXY).attr('height', 1000*scaleXY).attr('id', 'svg2')
+				d3.select('#svg2').append('g')
+				xMapScale = d3.scale.linear().domain([3.2,20]).range([0,1000*scaleXY]);
+				yMapScale = d3.scale.linear().domain([2.6,19.4]).range([1000*scaleXY,0]);
+				d3.select('g').append('rect').attr('x',-10000).attr('y',-10000).attr('width',20000*scaleXY).attr('height',20000*scaleXY).attr('fill', 'white');
+				d3.json('streets.json', function(p) {
+					var lines = d3.svg.line().x(function(d) {return xMapScale(d['x'])}).y(function(d) {return yMapScale(d['y'])});
+					d3.select('g').selectAll('path').data(p).enter().append('path').attr('d', function(d) {return lines(d);})
+					var x_values = [];
+					var y_values = [];
+					for (var i = 0; i < p.length; i++) {
+						for (var j = 0; j < p[i].length; j++) {
+							x_values.push(p[i][j].x);
+							y_values.push(p[i][j].y);
+						}
+					}
+					lx = Math.min(...x_values);
+					ux = Math.max(...x_values);
+					ly = Math.min(...y_values);
+					uy = Math.max(...y_values);
+					//console.log([lx, ux, ly, uy]);
+				});
+				d3.csv('pumps.csv', function(p) {
+					d3.select('g').selectAll('circle').data(p).enter().append('circle').attr('r', 10*scaleXY).attr('cx', function(d) {return xMapScale(d['x']);}).attr('cy', function(d) {return yMapScale(d['y']);}).attr('class','pump');
+				});
+				//d3.select('g').on('click', function(d) {[console.log(event.clientX/scaleXY - 14), console.log(event.clientY/scaleXY - 202)]});
+				var streets = [[299, 560, 60, 'R E G E N T   S T R E E T'],
+							   [360, 332, -23, 'GREAT MARLBOROUGH STREET'],
+							   [530, 305, 68, 'POLAND STREET'],
+							   [573, 438, -26, 'BROAD STREET'],
+							   [581, 723, -43, 'BREWER STREET']];
+				d3.select('g').selectAll('.street').data(streets).enter().append('text').attr('transform', function(d) {return 'translate(' + (d[0]*scaleXY) + ',' + (d[1]*scaleXY) + ') rotate(' + d[2] + ')';}).text(function(d) {return d[3];}).attr('font-size', 20*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma').attr('class', 'streets');
+				d3.select('#svg1').selectAll('.street').append('line').attr('x1', 1310*scaleXY).attr('x2', 2310*scaleXY).attr('y1', 1000*scaleXY).attr('y2', 1000*scaleXY);
+				d3.select('g').append('rect').attr('x', -20*scaleXY + 486*scaleXY).attr('y', -20*scaleXY + 346*scaleXY).attr('width', 40*scaleXY).attr('height', 40*scaleXY).attr('fill', 'orange').attr('opacity', 0.5);
+				d3.select('g').append('rect').attr('x', -20*scaleXY + 634*scaleXY).attr('y', -20*scaleXY + 438*scaleXY).attr('width', 40*scaleXY).attr('height', 40*scaleXY).attr('fill', 'purple').attr('opacity', 0.5);
+				function cluster_points() {
+					d3.csv('deaths_age_sex.csv', function(p) {
+						total = 0;
+						for (var i = start_day; i < end_day; i++) {
+							total = total + deaths_by_day[i].length;
+						}
+						var num = 0
+						for (var i = g - 1; i >= 0; i--) {
+							for (var j = 0; j < g; j++) {
+								var cluster_size = 0;
+								for (var k = start_day; k < end_day; k++) {
+									for (var m = 0; m < deaths_by_day[k].length; m++) {
+										if ((deaths_by_day[k][m].x > (j/g)*16.8+3.2) && (deaths_by_day[k][m].x < ((j+1)/g)*16.8+3.2)) {
+											if ((deaths_by_day[k][m].y > (i/g)*16.8+2.6) && (deaths_by_day[k][m].y < ((i+1)/g)*16.8+2.6)) {
+												cluster_size++;
+											}
+										}
+									}
+								}
+								var xCent = xMapScale(((j+0.5)/g)*16.8+3.2);
+								var yCent = yMapScale(((i+0.5)/g)*16.8+2.6);
+								d3.select('g').append('rect').attr('width', scaleXY*1000/(Math.max(g, 1)*1.01)).attr('height', scaleXY*1000/(Math.max(g, 1)*1.01)).attr('x', xCent - scaleXY*(500/(Math.max(g, 1)*1.01))).attr('y', yCent - scaleXY*(500/(Math.max(g, 1)*1.01))).attr('fill', function(d) {return d3.rgb(255, 255 - (800/(total+1))*cluster_size*g**1.25/10, 96)}).attr('class', 'clust').attr('id', 'i' + num).attr('opacity', 0.8);
+								d3.select('g').append('text').attr('dx', xCent).attr('dy', yCent+scaleXY*(25/g)).text(cluster_size).attr('font-size', 100*scaleXY/g).style('text-anchor', 'middle').attr('class', 'clust_text').attr('font-family', 'Tahoma').attr('id', 'j' + num);
+								num++;
+							}
+						}
+						//d3.select('g').selectAll('circle').data(p).enter().append('circle').attr('r', 10*scaleXY).attr('cx', function(d) {return xMapScale(d['x']);}).attr('cy', function(d) {return yMapScale(d['y']);}).attr('class','pump');
+						clustering = 1;
+						d3.select('#check').attr('fill', 'black')
+					});
+				}
+				function refresh_counts() {
+					//d3.selectAll('.clust_text').remove();
+					clustering = 0;
+					d3.csv('deaths_age_sex.csv', function(p) {
+						total = 0;
+						for (var i = start_day; i < end_day; i++) {
+							total = total + deaths_by_day[i].length;
+						}
+						var num = 0
+						for (var i = g - 1; i >= 0; i--) {
+							for (var j = 0; j < g; j++) {
+								var cluster_size = 0;
+								for (var k = start_day; k < end_day; k++) {
+									for (var m = 0; m < deaths_by_day[k].length; m++) {
+										if ((deaths_by_day[k][m].x > (j/g)*16.8+3.2) && (deaths_by_day[k][m].x < ((j+1)/g)*16.8+3.2)) {
+											if ((deaths_by_day[k][m].y > (i/g)*16.8+2.6) && (deaths_by_day[k][m].y < ((i+1)/g)*16.8+2.6)) {
+												cluster_size++;
+											}
+										}
+									}
+								}
+								var xCent = xMapScale(((j+0.5)/g)*16.8+3.2);
+								var yCent = yMapScale(((i+0.5)/g)*16.8+2.6);
+								d3.select('#i' + num).attr('fill', function(d) {return d3.rgb(255, 255 - (800/(Math.max(1, total)))*cluster_size*g**1.25/10, 96)});
+								d3.select('#j' + num).text(cluster_size);
+								num++;
+							}
+						}
+						//d3.select('g').selectAll('circle').data(p).enter().append('circle').attr('r', 10*scaleXY).attr('cx', function(d) {return xMapScale(d['x']);}).attr('cy', function(d) {return yMapScale(d['y']);}).attr('class','pump');
+						clustering = 1;
+						d3.select('#check').attr('fill', 'black')
+					});
+				}
+				d3.select('#svg1').append('line').attr('x1', 2*scaleXY).attr('x2', 1000*scaleXY).attr('y1', 2*scaleXY).attr('y2', 2*scaleXY).style('stroke-width', 2);
+				d3.select('#svg1').append('line').attr('x1', 2*scaleXY).attr('x2', 1000*scaleXY).attr('y1', 1000*scaleXY).attr('y2', 1000*scaleXY).style('stroke-width', 2);
+				d3.select('#svg1').append('line').attr('x1', 2*scaleXY).attr('x2', 2*scaleXY).attr('y1', 2*scaleXY).attr('y2', 1000*scaleXY).style('stroke-width', 2);
+				d3.select('#svg1').append('line').attr('x1', 1000*scaleXY).attr('x2', 1000*scaleXY).attr('y1', 2*scaleXY).attr('y2', 1000*scaleXY).style('stroke-width', 2);
+				d3.csv('deathdays.csv', function(p) {
+					var hlines = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140];
+					d3.select('#svg1').selectAll('.hlines').data(hlines).enter().append('line').attr('x1', 1310*scaleXY).attr('x2', 2310*scaleXY).attr('y1', function(d) {return 1000*scaleXY - 6*d*scaleXY;}).attr('y2', function(d) {return 1000*scaleXY - 6*d*scaleXY;}).attr('opacity', 0.25).style('stroke-width', 1).attr('class', 'hlines');
+					d3.select('#svg1').selectAll('.hlabs').data(hlines).enter().append('text').attr('x', 2320*scaleXY).attr('y', function(d) {return 1004*scaleXY - 6*d*scaleXY;}).text(function(d) {return d;}).attr('font-size', 15*scaleXY).attr('font-family', 'Tahoma').attr('class', 'hlabs');
+					d3.select('#svg1').selectAll(".bar").data(p).enter().append('rect').attr('x', function(d, i) {return (i*20 + 1340)*scaleXY;}).attr('y', function(d) {return ((997 - d['deaths']*6)*scaleXY);}).attr('width', 20*scaleXY).attr('height', function(d) {return d['deaths']*6*scaleXY;}).attr('fill', '#FFBB88').attr('class', 'bar');
+					d3.select('#svg1').selectAll(".place").data(p).enter().append('rect').attr('x', function(d, i) {return (i*20 + 1340)*scaleXY;}).attr('y', 0).attr('width', 20*scaleXY).attr('height', 997*scaleXY).attr('fill', 'blue').attr('opacity', 0).attr('class', 'place').attr('id', function(d, i) {return 'c' + i;});
+					d3.select('#svg1').append('rect').attr('x', function(d, i) {return ((-1)*20 + 1340)*scaleXY;}).attr('y', 0).attr('width', 20*scaleXY).attr('height', 997*scaleXY).attr('fill', 'white').attr('id', 'clear').attr('opacity', 0);
+					d3.csv('deaths_age_sex.csv', function (q) {
+						for (var i = 0; i < p.length; i++) {
+							deaths = [];
+							for (var j = 0; j < p[i]['deaths']; j++) {
+								deaths.push(q.shift());
+							}
+							deaths_by_day.push(deaths.slice());
+						}
+						//console.log(deaths_by_day);
+						for (var i = 0; i < deaths_by_day.length; i++) {
+							//console.log(c);
+							d3.select('g').selectAll('.c' + i).data(deaths_by_day[i]).enter().append('circle').attr('r', 5*scaleXY).attr('fill', function(d) {return d3.hsl(200 - d['gender']*200, 0.5, 0.3 + d['age']*0.1);}).attr('cx', function(d) {return xMapScale(d['x']);}).attr('cy', function(d) {return yMapScale(d['y']);}).attr('class', 'c' + i).attr('opacity', 0);
+						}
+						function show_deaths(c) {
+							for (var i = start_day; i < parseInt(c) + 1; i++) {
+								//console.log(c);
+								d3.select('g').selectAll('.c' + i).attr('opacity', 1);
+								d3.select("#c" + i).attr('opacity', 0.25);
+							}
+							end_day = parseInt(c) + 1;
+							if (clustering == 1) {
+								d3.select('.cluster').remove();
+								refresh_counts();
+							}
+							
+						}
+						function hide_deaths() {
+							for (var i = start_day; i < deaths_by_day.length; i++) {
+								d3.select('g').selectAll('.c' + i).data(deaths_by_day[i]).attr('opacity', 0);
+								d3.select("#c" + i).attr('opacity', 0);
+							}
+							end_day = 0;
+							if (clustering == 1) {
+								refresh_counts();
+							}
+						}
+						d3.select('#svg1').selectAll('#clear').on('mouseover', function(d) {hide_deaths();});
+						d3.select('#svg1').selectAll(".place").on('mouseover', function(d) {hide_deaths(); show_deaths(this['id'].substring(1));});
+						//d3.select('#svg1').selectAll(".place").on('mouseout', function(d) {hide_deaths(this['id'].substring(1));});
+						d3.select('#svg1').selectAll(".place").on('click', function(d) {hide_deaths(); start_day = this['id'].substring(1); show_deaths(this['id'].substring(1));});
+					});
+				});
+				var dr = d3.behavior.drag().origin(Object).on('drag', function() {var t = d3.select(this);
+																				  var xx = parseInt(d3.transform(t.attr('transform')).translate[0]);
+																				  var yy = parseInt(d3.transform(t.attr('transform')).translate[1]);
+																				  var ss = d3.transform(t.attr('transform')).scale;
+																				  t.attr('transform', 'translate(' + (xx + d3.event.dx) + ',' + (yy + d3.event.dy) + ')' + 'scale(' + ss + ')');});
+				var sc = d3.behavior.zoom().on('zoom', function() {var t = d3.select(this);
+																   var xx = parseInt(d3.transform(t.attr('transform')).translate[0]);
+																   var yy = parseInt(d3.transform(t.attr('transform')).translate[1]);
+																   t.attr('transform', 'translate(' + xx + ',' + yy + ')' + 'scale(' + d3.event.scale + ')')});
+				d3.select('g').call(dr).call(sc);
+				function hide_clusters() {
+					d3.select('#check').attr('fill', 'white')
+					d3.selectAll('.clust').remove()
+					d3.selectAll('.clust_text').remove()
+					clustering = 0;
+				}
+				function grid_lines(g) {
+					d3.select('#check').attr('fill', 'black')
+					for (var i = 0; i < g + 1; i++) {
+						d3.select('g').append('line').attr('x1', -10000).attr('x2', 10000).attr('y1', yMapScale((i/g)*16.8+2.6)).attr('y2', yMapScale((i/g)*16.8+2.6)).attr('class', 'grid').style('stroke-width', 2);;
+						d3.select('g').append('line').attr('x1', xMapScale((i/g)*16.8+3.2)).attr('x2', xMapScale((i/g)*16.8+3.2)).attr('y1', -10000).attr('y2', 10000).attr('class', 'grid').style('stroke-width', 2);;
+					}
+					cluster_points();
+				}
+				function remove_grid() {
+					d3.selectAll('.grid').remove();
+					hide_clusters();
+				}
+				d3.select('#svg1').append('circle').attr('cx',50*scaleXY).attr('cy',1050*scaleXY).attr('r',20*scaleXY).attr('fill', 'black');d3.select('#svg1').append('text').attr('dx', 150*scaleXY).attr('dy', 1057*scaleXY);
+				d3.select('#svg1').append('circle').attr('cx',50*scaleXY).attr('cy',1050*scaleXY).attr('r',15*scaleXY).attr('fill', 'white').attr('id','check');
+				d3.select('#svg1').append('text').attr('dx', 151*scaleXY).attr('dy', 1059*scaleXY).text('+').attr('font-size',30*scaleXY).style('text-anchor', 'middle');
+				d3.select('#svg1').append('text').attr('dx', 270*scaleXY).attr('dy', 1059*scaleXY).text('Cluster View').attr('font-size',30*scaleXY).attr('font-size', 25*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('rect').attr('x', 130*scaleXY).attr('y', 1030*scaleXY).attr('width', 40*scaleXY).attr('height', 40*scaleXY).attr('id', 'add').attr('fill', 'darkgray').attr('opacity', 0.5);
+				d3.select('#svg1').append('text').attr('dx', 200*scaleXY).attr('dy', 1055*scaleXY).text('-').attr('font-size', 30*scaleXY).style('text-anchor', 'middle');
+				d3.select('#svg1').append('rect').attr('x', 180*scaleXY).attr('y', 1030*scaleXY).attr('width', 40*scaleXY).attr('height', 40*scaleXY).attr('id', 'subtract').attr('fill', 'darkgray').attr('opacity', 0.5);
+				d3.select('#check').on('click', function(d) {if (d3.select(this).attr('fill') == 'black') {d3.select(this).attr('fill', 'white'); remove_grid();} else {d3.select(this).attr('fill', 'black'); g = Math.max(g, 1); grid_lines(g);}});
+				d3.select('#add').on('click', function(d) {if (g < 20) {g++;} remove_grid(); grid_lines(g);})
+				d3.select('#subtract').on('click', function(d) {if (g > 1) {g--; remove_grid(); grid_lines(g);} else {g = 0; remove_grid();}})
+
+				var freqs = [0, 0, 0, 0, 0, 0];
+				var genders = [0, 0];
+				var gender_colors = ['lightblue', '#FF8888']
+				var freqs_prior = [.28, .25, .3, .13, .04, .01];
+				var freqs_sum = 0;
+				var freqs_scaled = [0, 0, 0, 0, 0, 0];
+				var genders_scaled = [0, 0]
+				d3.csv('deaths_age_sex.csv', function(p) {
+					for (var i = 0; i < p.length; i++) {
+						freqs[p[i].age]++;
+						genders[p[i].gender]++;
+						freqs_sum++;
+						
+					}
+					for (var i = 0; i in freqs; i++){
+						freqs_scaled[i] = freqs[i]/freqs_sum;
+					}
+					for (var i = 0; i in genders; i++){
+						genders_scaled[i] = genders[i]/freqs_sum;
+					}
+					var hlines2 = [0.1, 0.2, 0.3];
+					d3.select('#svg1').selectAll('.hlines2').data(hlines2).enter().append('line').attr('x1', 10*scaleXY).attr('x2', 1010*scaleXY).attr('y1', function(d) {return 2000*scaleXY - 2000*d*scaleXY;}).attr('y2', function(d) {return 2000*scaleXY - 2000*d*scaleXY;}).attr('opacity', 0.25).style('stroke-width', 1).attr('class', 'hlines2');
+					d3.select('#svg1').selectAll('.hlabs2').data(hlines2).enter().append('text').attr('x', 1020*scaleXY).attr('y', function(d) {return 2004*scaleXY - 2000*d*scaleXY;}).text(function(d) {return d;}).attr('font-size', 15*scaleXY).attr('font-family', 'Tahoma').attr('class', 'hlabs2');
+					d3.select('#svg1').selectAll(".age_bars").data(freqs_scaled).enter().append('rect').attr('x', function(d, i) {return (i*150 + 60)*scaleXY;}).attr('y', function(d) {return 2000*scaleXY - 2000*d*scaleXY;}).attr('width', 50*scaleXY).attr('height', function(d) {return 2000*d*scaleXY;}).attr('fill', '#FFDD88').attr('class', 'age_bars');
+					d3.select('#svg1').selectAll(".age_bars_2").data(freqs_prior).enter().append('rect').attr('x', function(d, i) {return (i*150 + 110)*scaleXY;}).attr('y', function(d) {return 2000*scaleXY - 2000*d*scaleXY;}).attr('width', 50*scaleXY).attr('height', function(d) {return 2000*d*scaleXY;}).attr('fill', '#DD66DD').attr('class', 'age_bars_2');
+					d3.select('#svg1').append('line').attr('x1', 10*scaleXY).attr('x2', 1010*scaleXY).attr('y1', 2000*scaleXY).attr('y2', 2000*scaleXY).style('stroke-width', 5);
+					d3.select('#svg1').append('rect').attr('x', function(d, i) {return ((-1)*20 + 1340)*scaleXY;}).attr('y', 0).attr('width', 20*scaleXY).attr('height', 997*scaleXY).attr('fill', 'white').attr('id', 'clear').attr('opacity', 0);
+					d3.select('#svg1').selectAll(".age_gend").data(genders_scaled).enter().append('rect').attr('x', function(d, i) {return (i*150 + 1650)*scaleXY;}).attr('y', function(d) {return 2000*scaleXY - 1300*d*scaleXY;}).attr('width', 150*scaleXY).attr('height', function(d) {return 1300*d*scaleXY;}).attr('fill', function(d,i) {return gender_colors[i];}).attr('class', 'age_gend');
+					d3.select('#svg1').append('line').attr('x1', 1510*scaleXY).attr('x2', 2110*scaleXY).attr('y1', 2000*scaleXY).attr('y2', 2000*scaleXY).style('stroke-width', 5);
+					d3.select('#svg1').selectAll('.gendT').data(genders).enter().append('text').attr('dx', function(d,i) {return 1725*scaleXY + i*150*scaleXY;}).attr('dy', 1320*scaleXY).text(function(d) {return d;}).attr('font-size', 22*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma').attr('class', 'gendT');
+
+				});
+				var bKeys = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+				d3.select('#svg1').selectAll('.bKey').data(bKeys).enter().append('rect').attr('x', 1030*scaleXY).attr('y', function(d, i) {return 60*scaleXY + 60*i*scaleXY;}).attr('width', 60*scaleXY).attr('height', 60*scaleXY).attr('class', 'bKey').attr('fill', function(d) {return d3.hsl(200, 0.5, d);});
+				d3.select('#svg1').append('circle').attr('cx', 1060*scaleXY).attr('cy', function(d, i) {return 60*scaleXY + 60*7.5*scaleXY;}).attr('r', 15*scaleXY).attr('fill', 'darkgray');
+				d3.select('#svg1').append('rect').attr('x', 1030*scaleXY).attr('y', 60*scaleXY + 60*8.5*scaleXY).attr('width', 60*scaleXY).attr('height', 60*scaleXY).attr('fill', 'orange').attr('opacity', 0.5);
+				d3.select('#svg1').append('rect').attr('x', 1030*scaleXY).attr('y', 150*scaleXY + 60*8.5*scaleXY).attr('width', 60*scaleXY).attr('height', 60*scaleXY).attr('fill', 'purple').attr('opacity', 0.5);
+				d3.select('#svg1').selectAll('.rKey').data(bKeys).enter().append('rect').attr('x', 1120*scaleXY).attr('y', function(d, i) {return 60*scaleXY + 60*i*scaleXY;}).attr('width', 60*scaleXY).attr('height', 60*scaleXY).attr('class', 'rKey').attr('fill', function(d) {return d3.hsl(0, 0.5, d);});
+				d3.select('#svg1').append('text').attr('dx', 1060*scaleXY).attr('dy', 45*scaleXY).text('Male').attr('font-size', 18*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1150*scaleXY).attr('dy', 45*scaleXY).text('Female').attr('font-size', 18*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1200*scaleXY).attr('dy', 95*scaleXY).text('0-10 yrs').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1200*scaleXY).attr('dy', 155*scaleXY).text('11-20 yrs').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1200*scaleXY).attr('dy', 215*scaleXY).text('21-40 yrs').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1200*scaleXY).attr('dy', 275*scaleXY).text('41-60 yrs').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1200*scaleXY).attr('dy', 335*scaleXY).text('61-80 yrs').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1200*scaleXY).attr('dy', 395*scaleXY).text('81+ yrs').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1130*scaleXY).attr('dy', function(d, i) {return 60.6*scaleXY + 60.6*7.5*scaleXY;}).text('Pump').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1130*scaleXY).attr('dy', function(d, i) {return 150.6*scaleXY + 60.6*7.5*scaleXY;}).text('Work House').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('dx', 1130*scaleXY).attr('dy', function(d, i) {return 240.6*scaleXY + 60.6*7.5*scaleXY;}).text('Brewery').attr('font-size', 18*scaleXY).style('text-anchor', 'left').attr('font-family', 'Tahoma');
+
+				d3.csv('deathdays.csv', function(p) {
+					d3.select('#svg1').selectAll('.dates').data(p).enter().append('text').attr('transform', function(d, i) {return 'translate(' + (1345*scaleXY + 20*i*scaleXY) + ',' + 1015*scaleXY + ') rotate(70)';}).text(function(d) {return d.date;}).attr('font-size', 15*scaleXY).attr('font-family', 'Tahoma').attr('class', 'dates');
+				});
+				d3.select('#svg1').append('rect').attr('x', 1100*scaleXY).attr('y', 1370*scaleXY).attr('width', 60*scaleXY).attr('height', 60*scaleXY).attr('fill', '#FFDD88');
+				d3.select('#svg1').append('rect').attr('x', 1100*scaleXY).attr('y', 1460*scaleXY).attr('width', 60*scaleXY).attr('height', 60*scaleXY).attr('fill', '#DD66DD');
+				d3.select('#svg1').append('text').attr('x', 1180*scaleXY).attr('y', 1405*scaleXY).text('Cholera deaths').style('text-anchor', 'left').attr('font-family', 'Tahoma');;
+				d3.select('#svg1').append('text').attr('x', 1180*scaleXY).attr('y', 1495*scaleXY).text('Overall population').style('text-anchor', 'left').attr('font-family', 'Tahoma');;
+				var ageText = ['0 - 10', '11 - 20', '21 - 40', '41 - 60', '61 - 80', '80+'];
+				d3.select('#svg1').selectAll('.age_text').data(ageText).enter().append('text').attr('transform', function(d, i) {return 'translate(' + ((i*150 + 80)*scaleXY) + ',' + 2035*scaleXY + ') rotate(0)';}).text(function(d) {return d;}).style('text-anchor', 'left').attr('font-family', 'Tahoma').attr('class', 'age_text');
+				d3.select('#svg1').append('text').attr('transform', function(d, i) {return 'translate(' + ((1700)*scaleXY) + ',' + 2035*scaleXY + ') rotate(0)';}).text('Males').style('text-anchor', 'left').attr('font-family', 'Tahoma').attr('class', 'age_text');
+				d3.select('#svg1').append('text').attr('transform', function(d, i) {return 'translate(' + ((1837)*scaleXY) + ',' + 2035*scaleXY + ') rotate(0)';}).text('Females').style('text-anchor', 'left').attr('font-family', 'Tahoma').attr('class', 'age_text');
+				d3.select('#svg1').append('text').attr('transform', function(d, i) {return 'translate(' + (2380*scaleXY) + ',' + 530*scaleXY + ') rotate(-90)';}).text('Number of deaths').attr('font-size', 20*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('transform', function(d, i) {return 'translate(' + (1810*scaleXY) + ',' + 1095*scaleXY + ') rotate(0)';}).text('Date').attr('font-size', 20*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('line').attr('x1', 0).attr('x2', 2500*scaleXY).attr('y1', 1250*scaleXY).attr('y2', 1250*scaleXY).style('stroke-width', 1);
+				d3.select('#svg1').append('text').attr('x', 500*scaleXY).attr('y', 1150*scaleXY).text('Map of Cholera Deaths in London').attr('font-size', 40*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('x', 1800*scaleXY).attr('y', 1150*scaleXY).text('Number of Deaths per Day').attr('font-size', 40*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('x', 500*scaleXY).attr('y', 2100*scaleXY).text('Age Distribution of Victims vs. Population').attr('font-size', 40*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				d3.select('#svg1').append('text').attr('x', 1800*scaleXY).attr('y', 2100*scaleXY).text('Number of Deaths by Sex').attr('font-size', 40*scaleXY).style('text-anchor', 'middle').attr('font-family', 'Tahoma');
+				}
+			var s = 0.6;
+			var g = 5;
+			var start_day = 0;
+			var end_day = 0
+			var deaths_by_day = [];	
+			var clustering = 0;
+			create_figures(s);
+			
+		</script>
+	</body>
+</html>
