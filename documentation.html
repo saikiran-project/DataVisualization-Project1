@@ -7,14 +7,20 @@
 		<title>Cholera Visualization</title>
 	</head>
 	<body>
-		<h1> <a href = 'index.html'> Cholera Outbreak Visualization </a> | <a href = 'about.html'> About </a> | Documentation </h1>
+		<h1> <a href = 'index.html'> Cholera Outbreak Visualization </a> | <a href = 'video.html'> Video </a> | Documentation </h1>
+
+		<h1>About </h1>
+		<p>This project was created for a data visualization course. The idea was to create a visualization of the cholera outbreak in 19th century London by recreating and building upon John Snow's map of the outbreak</a>.
+			Line segments that make up the map of the general area, locations of pumps, deaths and relevant information (location, day, gender, age), and an estimated population age distribution in the setting were given. Some additional points of interest (street names, work house, brewery) were located from John Snow's map itself.
+			<br>
+			<br>
+		</p>
+		<h1>Design </h1>
 		<p>
-		The very first thing I did to get started on this project was try to recreate the map using the line segment .csv file provided. This went hand-in-hand with doing a simple plot of the deaths and pumps on the map.
+		The very first thing I did to get started on this project was try to create the map. This went hand-in-hand with doing a simple plot of the deaths and pumps on the map.
 		My reasoning in doing this before any planning on the actual visualization was that, because I am still new to D3, and because of the limited time, it would put me at ease to see some sort of code-related progress as early as possible.
 		<br><br>
-		I used a variety of sources to accomplish these first two steps. For displaying the line I included an interactive template that I could experiment with. It also allowed me to change the template version to v3 (the version I'm using), which gave me the chance to figure out what functionalities were not v3-compatible and how I needed to change them.
-		<br><br>
-		I eventually became comfortable with how lines work in D3. A problem I ran into was that I was trying to append multiple separated line segments.
+		A problem I ran into was that I was trying to append multiple separated line segments.
 		At first, I used a <i>for</i> loop to append the many different lines. I then learned how to use .enter().append() in place of a <i>for</i> loop.
 		<br><br>
 		Points were easy after plotting the lines.From here I had to start thinking about my design and how to convey the required information on the map (age and gender). Initially I had thought about using color for one of the variables and size for the other.
@@ -24,9 +30,12 @@
 		Intuitively, people view blue and red as male and female. I also perceieved lighter colors as looking "older."
 		<br><br>
 		 I made the pumps gray to stand out from the map while also allowing the main attention to be placed on the deaths.
+		 <img src="AgeGender.png"  style="width:700px;height:500px;">
+
 		<br><br>
 		My next task was to create a timeline for the deaths. I decided on using a bar chart (more of a histogram in this case) for this.
 		I could have used a connected dot plot, but I figured that bar charts would work better with the "hover-over" functionality, which will be discussed later. I placed the bar chart to the right of the map, so that both could easily be viewed at the same time.
+		<img src="TimelineChart.png"  style="width:700px;height:500px;">
 		<br><br>
 		I then had to make the bar chart interactive. Hovering over a certain bar should display the points up until that date.
 		This was rather difficult. The main challenge was getting the bar chart to display points UNTIL that day, rather than ON that day.
@@ -36,15 +45,11 @@
 		For example, the <i>zoom</i> transform would set the coordinates back to their default values. I ended up having to explicitly set the coordinates to their current values within the <i>zoom</i> transform to work around this.
 		<br><br>
 		The last challenging aspect of the project was clustering. My plan for showing clusters was to display gridlines on the map itself, and then portray the number of deaths in each cell both through a color gradient and a printed number.
-		I did not need any explicit examples since I was familiar with everything I needed at this point.
+		<img src="Clustering.png"  style="width:700px;height:500px;">
 		<br><br>
 		Last, I had to show the general distributions of age and gender. I figured that bar charts would be a perfectly good way to illustrate this.
-		This part was very easy overall and did not take too much time considering what I had done earlier.
 		I needed side-by-side bars to show how the general age dsitribution compared with the age distribution of the victims.
 		I chose yellow and purple as contrasting colors for the age distributions, and I again chose blue and red to represent male and female.
-		<br><br>
-		The final step was to properly label everything.
-		Labeling street maps in their proper locations was a bit tricky, but I was able to speed up the process by first logging where I clicked my mouse, and then clicking on the locations of the streets for their approximate coordinates. This was necessary for the positioning of some of the labels.
 		<br><br>
 		To show the work house and brewery on the map, I used yellow and purple squares. I wanted to choose two contrasting colors.
 	    From here, I just polished up some small details of my design and checked for color-blindness issues with Color Oracle.
@@ -57,7 +62,7 @@
 		This project was overall very difficult but a learning experience. I'm happy with how it turned out and I'm proud of myself for learning D3 in such a short time frame.<br>
 		</p>
 		<p style = 'font-size: 24px;'><b>Video Demonstration</b></p><br>
-		<iframe width="560" height="315" src="https://www.youtube.com/embed/v=L-Mim9n9kuA?start=7" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+		<iframe width="560" height="315" src="https://www.youtube.com/embed/Ft4SYtajZO8?start=7" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 		<hr>
 		<p style = 'font-size: 18px; margin-right: 50px;'>
 		<b>References</b><br><br>
