@@ -10,8 +10,7 @@
 		<h1> <a href = 'index.html'> Cholera Outbreak Visualization </a> | <a href = 'video.html'> Video </a> | Documentation </h1>
 
 		<h1>About </h1>
-		<p>This project was created for a data visualization course. The idea was to create a visualization of the cholera outbreak in 19th century London by recreating and building upon John Snow's map of the outbreak</a>.
-			Line segments that make up the map of the general area, locations of pumps, deaths and relevant information (location, day, gender, age), and an estimated population age distribution in the setting were given. Some additional points of interest (street names, work house, brewery) were located from John Snow's map itself.
+		<p>This project was created for data visualization course. The idea was to create a visualization of the cholera outbreak in 19th century London by recreating and building upon John Snow's map of the outbreak</a>
 			<br>
 			<br>
 		</p>
@@ -20,14 +19,11 @@
 		The very first thing I did to get started on this project was try to create the map. This went hand-in-hand with doing a simple plot of the deaths and pumps on the map.
 		My reasoning in doing this before any planning on the actual visualization was that, because I am still new to D3, and because of the limited time, it would put me at ease to see some sort of code-related progress as early as possible.
 		<br><br>
-		A problem I ran into was that I was trying to append multiple separated line segments.
-		At first, I used a <i>for</i> loop to append the many different lines. I then learned how to use .enter().append() in place of a <i>for</i> loop.
-		<br><br>
-		Points were easy after plotting the lines.From here I had to start thinking about my design and how to convey the required information on the map (age and gender). Initially I had thought about using color for one of the variables and size for the other.
-		This is the most obvious way I could think of to illustrate two additional variables onto a scatterplot. But there were some problems with this. Size would make the map very cluttered, and it was also counter-intuitive. Age does not have an intuitive relationship with size.
+		
+		I had to start thinking about my design and how to convey the required information on the map (age and gender). Initially I had thought about using color for gender and size for the age.
+		This is the most obvious way I could think of to illustrate two additional variables onto a scatterplot. But there were some problems with this. Size would make the map very cluttered, and clumsy. Age does not have an intuitive relationship with size.
 		<br><br>
 		I decided on using color for both variables. Blue/red would denote gender (male/female respectively) and brightness would denote age.
-		Intuitively, people view blue and red as male and female. I also perceieved lighter colors as looking "older."
 		<br><br>
 		 I made the pumps gray to stand out from the map while also allowing the main attention to be placed on the deaths.
 		 <img src="AgeGender.png"  style="width:700px;height:500px;">
@@ -37,12 +33,9 @@
 		I could have used a connected dot plot, but I figured that bar charts would work better with the "hover-over" functionality, which will be discussed later. I placed the bar chart to the right of the map, so that both could easily be viewed at the same time.
 		<img src="TimelineChart.png"  style="width:700px;height:500px;">
 		<br><br>
-		I then had to make the bar chart interactive. Hovering over a certain bar should display the points up until that date.
-		This was rather difficult. The main challenge was getting the bar chart to display points UNTIL that day, rather than ON that day.
+		I then had to make the bar chart interactive. Hovering over a certain bar should display the deaths of selected period.
+		This was rather difficult. The main challenge was getting the bar chart to display points in the selected period, rather than ON that day.
 		I ended up accomplishing this by using nested <i>for</i> loops to create an array <i>deaths_by_day</i>, which grouped the deaths, along with their location and other info, by day.
-		<br><br>
-		Surprisingly, the challenging part here was combining zooming and panning. Because both used transform() functions, they seemed to override each other.
-		For example, the <i>zoom</i> transform would set the coordinates back to their default values. I ended up having to explicitly set the coordinates to their current values within the <i>zoom</i> transform to work around this.
 		<br><br>
 		The last challenging aspect of the project was clustering. My plan for showing clusters was to display gridlines on the map itself, and then portray the number of deaths in each cell both through a color gradient and a printed number.
 		<img src="Clustering.png"  style="width:700px;height:500px;">
@@ -52,11 +45,11 @@
 		I chose yellow and purple as contrasting colors for the age distributions, and I again chose blue and red to represent male and female.
 		<br><br>
 		To show the work house and brewery on the map, I used yellow and purple squares. I wanted to choose two contrasting colors.
-	    From here, I just polished up some small details of my design and checked for color-blindness issues with Color Oracle.
+	        From here, I just polished up some small details of my design.
 		<br><br>
 		I was able to infer a great deal about the nature of this outbreak based on the visualization.
 		Most of the deaths occured around the Broad Street pump. None of the other pumps had a high concentration of deaths around them.<br>
-		Additionally, I can conclude that children and elderly people were disproportionately affected, which makes sense considering that these groups generally have weaker immunity.
+		Additionally, I can conclude that children and elderly people were mostly affected, which makes sense considering that these groups generally have weaker immunity.
 		The disease targeted males and females at about the same rate.<br>
 		<br>
 		This project was overall very difficult but a learning experience. I'm happy with how it turned out and I'm proud of myself for learning D3 in such a short time frame.<br>
